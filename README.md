@@ -1,5 +1,13 @@
 # 🧙‍♂️ Harry Potter's Invisible Cloak Portal 🔮
 
+
+https://github.com/user-attachments/assets/01993c8f-7fa7-4641-80da-4c394a51e9e1
+
+
+
+https://github.com/user-attachments/assets/01140de7-28b5-46c7-9e46-f47957c35b80
+
+
 The Harry Potter's Invisible Cloak project is an innovative and captivating endeavor that brings the enchanting world of Harry Potter into the realm of modern technology. Utilizing the powerful capabilities of Python and OpenCV, this project aims to recreate the magical invisibility cloak from the beloved Harry Potter series.
 
 ## 🎯 Project Evolution
