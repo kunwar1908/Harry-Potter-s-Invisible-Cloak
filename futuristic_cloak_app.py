@@ -213,19 +213,43 @@ with col1:
     
     color_preset = st.selectbox(
         "🎨 Color Preset", 
-        ["Custom", "Green Screen", "Blue Screen", "Red Cloak", "Purple Magic"]
+        ["Custom", "Green Screen", "Blue Screen", "Red Cloak", "Purple Magic", 
+         "Yellow Cloak", "Orange Cloak", "Pink Cloak", "Cyan Cloak", "Black Cloak", 
+         "White Cloak", "Brown Cloak", "Lime Green", "Dark Blue", "Magenta", "Turquoise"]
     )
     
-    # Preset color ranges
+    # Preset color ranges with expanded options
     color_presets = {
-        "Green Screen": ([50, 80, 50], [90, 255, 255]),
-        "Blue Screen": ([100, 80, 50], [130, 255, 255]),
-        "Red Cloak": ([0, 80, 50], [10, 255, 255]),
-        "Purple Magic": ([140, 80, 50], [160, 255, 255])
+        "Green Screen": ([50, 80, 50], [90, 255, 255]),      # Traditional green screen
+        "Blue Screen": ([100, 80, 50], [130, 255, 255]),     # Traditional blue screen
+        "Red Cloak": ([0, 80, 50], [10, 255, 255]),          # Bright red
+        "Purple Magic": ([140, 80, 50], [160, 255, 255]),    # Purple/violet
+        "Yellow Cloak": ([20, 80, 50], [40, 255, 255]),      # Bright yellow
+        "Orange Cloak": ([10, 80, 50], [25, 255, 255]),      # Orange
+        "Pink Cloak": ([160, 80, 50], [180, 255, 255]),      # Pink/magenta
+        "Cyan Cloak": ([80, 80, 50], [100, 255, 255]),       # Cyan/light blue
+        "Black Cloak": ([0, 0, 0], [180, 255, 50]),          # Black objects
+        "White Cloak": ([0, 0, 200], [180, 30, 255]),        # White/light objects
+        "Brown Cloak": ([10, 50, 20], [20, 255, 200]),       # Brown
+        "Lime Green": ([65, 80, 50], [85, 255, 255]),        # Bright lime green
+        "Dark Blue": ([110, 80, 50], [120, 255, 200]),       # Dark blue
+        "Magenta": ([140, 100, 100], [170, 255, 255]),       # Bright magenta
+        "Turquoise": ([85, 80, 50], [95, 255, 255])          # Turquoise
     }
     
     if color_preset != "Custom":
         lower_bound, upper_bound = color_presets[color_preset]
+        
+        # Display color info
+        st.markdown(f"""
+        <div style="background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; 
+                    border-radius: 8px; padding: 10px; margin: 10px 0;">
+            <div style="font-size: 0.9rem; color: #00ffff;">
+                🎯 <strong>{color_preset}</strong> Selected<br>
+                📊 HSV Range: {lower_bound} → {upper_bound}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     else:
         st.markdown("##### 🔽 Lower HSV Bounds")
         h_low = st.slider("H (Hue)", 0, 179, 50)
@@ -243,6 +267,28 @@ with col1:
     st.markdown("#### ✨ MAGICAL ENHANCEMENTS")
     show_mask = st.checkbox("👁️ Show Detection Mask", False)
     apply_glow = st.checkbox("🌟 Cyber Glow Effect", True)
+    
+    # Color guide
+    with st.expander("🎨 **COLOR SELECTION GUIDE**", expanded=False):
+        st.markdown("""
+        **🌟 Best Colors for Invisibility:**
+        - **🟢 Green Screen**: Classic choice, works in most lighting
+        - **🟦 Blue Screen**: Professional option, good contrast
+        - **🟡 Yellow Cloak**: Bright and easy to detect
+        - **🟣 Purple Magic**: Unique color, less common in backgrounds
+        
+        **💡 Tips for Best Results:**
+        - Use **solid colored fabric** without patterns
+        - Ensure **good lighting** on your cloak/object
+        - Avoid colors that appear in your background
+        - **Bright, saturated colors** work better than dull ones
+        
+        **🎯 Color Recommendations by Environment:**
+        - **Indoor**: Green, Blue, Purple, Magenta
+        - **Outdoor**: Pink, Orange, Cyan (avoid green/brown)
+        - **Dark Rooms**: Yellow, White, Bright colors
+        - **Bright Rooms**: Dark Blue, Black, Purple
+        """)
     
     st.markdown('</div>', unsafe_allow_html=True)
     
@@ -327,17 +373,17 @@ with col2:
                             result_frame_rgb = cv2.cvtColor(result_frame, cv2.COLOR_BGR2RGB)
                             
                             # Display main video
-                            video_placeholder.image(result_frame_rgb, channels="RGB", use_column_width=True)
+                            video_placeholder.image(result_frame_rgb, channels="RGB", use_container_width=True)
                             
                             # Show mask if enabled
                             if show_mask:
                                 mask_colored = cv2.applyColorMap(mask, cv2.COLORMAP_PLASMA)
                                 mask_rgb = cv2.cvtColor(mask_colored, cv2.COLOR_BGR2RGB)
-                                mask_placeholder.image(mask_rgb, caption="🎭 Detection Mask", channels="RGB", use_column_width=True)
+                                mask_placeholder.image(mask_rgb, caption="🎭 Detection Mask", channels="RGB", use_container_width=True)
                         else:
                             # Show original frame
                             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                            video_placeholder.image(frame_rgb, channels="RGB", use_column_width=True)
+                            video_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
                     
                     time.sleep(0.03)  # ~30 FPS
                 
@@ -351,7 +397,7 @@ with col2:
         placeholder_image = np.zeros((480, 640, 3), dtype=np.uint8)
         cv2.putText(placeholder_image, "PORTAL OFFLINE", (180, 240), 
                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 65), 2)
-        video_placeholder.image(placeholder_image, channels="RGB", use_column_width=True)
+        video_placeholder.image(placeholder_image, channels="RGB", use_container_width=True)
 
 # Footer with matrix-style info
 st.markdown("---")
