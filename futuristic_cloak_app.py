@@ -165,10 +165,10 @@ class FuturisticInvisibleCloak:
         dilation = cv2.dilate(open_mask, self.dilation_kernel, iterations=1)
         return dilation
     
-    def apply_invisibility_effect(self, frame, background, lower_hsv, upper_hsv):
-        """Apply the invisible cloak effect"""
+    def apply_invisibility_effect(self, frame, background, lower_hsv, upper_hsv, apply_glow=False, glow_intensity=0.6, glow_size=15):
+        """Apply the invisible cloak effect with optional glow"""
         if background is None:
-            return frame
+            return frame, None
             
         # Convert to HSV
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
@@ -179,11 +179,52 @@ class FuturisticInvisibleCloak:
         # Filter mask
         mask = self.filter_mask(mask)
         
+        # Create glow effect if enabled
+        if apply_glow:
+            # Find edges of the mask
+            edges = cv2.Canny(mask, 50, 150)
+            
+            # Create multiple glow layers with different colors
+            glow_layers = []
+            
+            # Calculate blur sizes based on glow_size parameter
+            outer_blur = (glow_size + 6, glow_size + 6)
+            middle_blur = (glow_size, glow_size)
+            inner_blur = (max(5, glow_size - 6), max(5, glow_size - 6))
+            
+            # Layer 1: Cyan glow (outermost)
+            cyan_glow = cv2.GaussianBlur(edges, outer_blur, 0)
+            cyan_glow = cv2.GaussianBlur(cyan_glow, outer_blur, 0)  # Double blur for softer effect
+            cyan_color = np.zeros_like(frame)
+            cyan_color[:, :] = [255, 255, 0]  # BGR format - cyan
+            cyan_glow_colored = cv2.bitwise_and(cyan_color, cyan_color, mask=cyan_glow)
+            glow_layers.append((cyan_glow_colored, 0.2 * glow_intensity))
+            
+            # Layer 2: Purple glow (middle)
+            purple_glow = cv2.GaussianBlur(edges, middle_blur, 0)
+            purple_glow = cv2.GaussianBlur(purple_glow, middle_blur, 0)
+            purple_color = np.zeros_like(frame)
+            purple_color[:, :] = [255, 0, 255]  # BGR format - magenta/purple
+            purple_glow_colored = cv2.bitwise_and(purple_color, purple_color, mask=purple_glow)
+            glow_layers.append((purple_glow_colored, 0.3 * glow_intensity))
+            
+            # Layer 3: Yellow glow (innermost)
+            yellow_glow = cv2.GaussianBlur(edges, inner_blur, 0)
+            yellow_color = np.zeros_like(frame)
+            yellow_color[:, :] = [0, 255, 255]  # BGR format - yellow
+            yellow_glow_colored = cv2.bitwise_and(yellow_color, yellow_color, mask=yellow_glow)
+            glow_layers.append((yellow_glow_colored, 0.4 * glow_intensity))
+        
         # Apply invisibility effect
         cloak = cv2.bitwise_and(background, background, mask=mask)
         inverse_mask = cv2.bitwise_not(mask)
         current_background = cv2.bitwise_and(frame, frame, mask=inverse_mask)
         result = cv2.add(cloak, current_background)
+        
+        # Apply glow layers to the result
+        if apply_glow:
+            for glow_layer, weight in glow_layers:
+                result = cv2.addWeighted(result, 1.0, glow_layer, weight, 0)
         
         return result, mask
 
@@ -267,6 +308,21 @@ with col1:
     st.markdown("#### ✨ MAGICAL ENHANCEMENTS")
     show_mask = st.checkbox("👁️ Show Detection Mask", False)
     apply_glow = st.checkbox("🌟 Cyber Glow Effect", True)
+    
+    if apply_glow:
+        st.markdown("##### 🌟 Glow Settings")
+        glow_intensity = st.slider("✨ Glow Intensity", 0.1, 1.0, 0.6, 0.1)
+        glow_size = st.slider("📏 Glow Size", 5, 25, 15, 2)
+        
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 0, 0.1); border: 1px solid #ffff00; 
+                    border-radius: 8px; padding: 8px; margin: 8px 0; font-size: 0.8rem;">
+            🌟 Multi-layer glow: Cyan→Purple→Yellow edges
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        glow_intensity = 0.6  # Default values when glow is off
+        glow_size = 15
     
     # Color guide
     with st.expander("🎨 **COLOR SELECTION GUIDE**", expanded=False):
@@ -361,13 +417,11 @@ with col2:
                                 frame, 
                                 st.session_state.background_frame,
                                 lower_bound,
-                                upper_bound
+                                upper_bound,
+                                apply_glow=apply_glow,
+                                glow_intensity=glow_intensity,
+                                glow_size=glow_size
                             )
-                            
-                            # Apply glow effect if enabled
-                            if apply_glow:
-                                glow = cv2.GaussianBlur(result_frame, (15, 15), 0)
-                                result_frame = cv2.addWeighted(result_frame, 0.8, glow, 0.3, 0)
                             
                             # Convert BGR to RGB
                             result_frame_rgb = cv2.cvtColor(result_frame, cv2.COLOR_BGR2RGB)
@@ -376,7 +430,7 @@ with col2:
                             video_placeholder.image(result_frame_rgb, channels="RGB", use_container_width=True)
                             
                             # Show mask if enabled
-                            if show_mask:
+                            if show_mask and mask is not None:
                                 mask_colored = cv2.applyColorMap(mask, cv2.COLORMAP_PLASMA)
                                 mask_rgb = cv2.cvtColor(mask_colored, cv2.COLOR_BGR2RGB)
                                 mask_placeholder.image(mask_rgb, caption="🎭 Detection Mask", channels="RGB", use_container_width=True)
